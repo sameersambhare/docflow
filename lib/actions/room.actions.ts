@@ -1,63 +1,72 @@
-'use server';
+"use server";
 
-import { nanoid } from 'nanoid'
-import { liveblocks } from '../liveblocks';
-import { revalidatePath } from 'next/cache';
-import { getAccessType, parseStringify } from '../utils';
-import { redirect } from 'next/navigation';
+import { nanoid } from "nanoid";
+import { liveblocks } from "../liveblocks";
+import { revalidatePath } from "next/cache";
+import { getAccessType, parseStringify } from "../utils";
+import { redirect } from "next/navigation";
 
-export const createDocument = async ({ userId, email }: CreateDocumentParams) => {
+export const createDocument = async ({
+  userId,
+  email,
+}: CreateDocumentParams) => {
   const roomId = nanoid();
 
   try {
     const metadata = {
       creatorId: userId,
       email,
-      title: 'Untitled'
-    }
+      title: "Untitled",
+    };
 
     const usersAccesses: RoomAccesses = {
-      [email]: ['room:write']
-    }
+      [email]: ["room:write"],
+    };
 
     const room = await liveblocks.createRoom(roomId, {
       metadata,
       usersAccesses,
-      defaultAccesses: ['room:write']
+      defaultAccesses: ["room:write"],
     });
-    
-    revalidatePath('/');
+
+    revalidatePath("/");
 
     return parseStringify(room);
   } catch (error) {
     console.log(`Error happened while creating a room: ${error}`);
   }
-}
+};
 
-export const getDocument = async ({ roomId, userId }: { roomId: string; userId: string }) => {
+export const getDocument = async ({
+  roomId,
+  userId,
+}: {
+  roomId: string;
+  userId: string;
+}) => {
   try {
-      const room = await liveblocks.getRoom(roomId);
-    
-      //TODO: BRING THIS BACK
-      // const hasAccess = Object.keys(room.usersAccesses).includes(userId);
-    
-      // if(!hasAccess) {
-      //   throw new Error('You do not have access to this document');
-      // }
-    
-      return parseStringify(room);
+    const room = await liveblocks.getRoom(roomId);
+
+    //TODO: BRING THIS BACK
+    // const hasAccess = Object.keys(room.usersAccesses).includes(userId);
+
+    // if(!hasAccess) {
+    //   throw new Error('You do not have access to this document');
+    // }
+
+    return parseStringify(room);
   } catch (error) {
     console.log(`Error happened while getting a room: ${error}`);
   }
-}
+};
 
 export const updateDocument = async (roomId: string, title: string) => {
   try {
     const updatedRoom = await liveblocks.updateRoom(roomId, {
       metadata: {
-        title
-      }
-    })
+        title,
+      },
+    });
 
     revalidatePath(`/documents/${roomId}`);
 
@@ -65,4 +74,12 @@ export const updateDocument = async (roomId: string, title: string) => {
   } catch (error) {
     console.log(`Error happened while updating a room: ${error}`);
   }
-}
+};
+export const getDocuments = async (email: string) => {
+  try {
+    const rooms = await liveblocks.getRooms({ userId: email });
+    return parseStringify(rooms);
+  } catch (error) {
+    console.log(`Error happened while getting a rooms: ${error}`);
+  }
+};
